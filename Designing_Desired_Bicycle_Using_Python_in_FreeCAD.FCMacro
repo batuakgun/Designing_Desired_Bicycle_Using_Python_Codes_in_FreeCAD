@@ -1,0 +1,571 @@
+import FreeCAD, Sketcher, Part, Show, Draft
+import math
+from FreeCAD import Base
+
+#Yüzeyler
+x_y_plane = (0.000000, 0.000000, 0.000000, 1.000000) ; x_z_plane = (-0.707107, 0.000000, 0.000000, -0.707107) ; y_z_plane = (-0.50000, 0.50000, 0.50000,-0.50000)
+
+#İsim
+name = "MyProject"
+
+#Noktalar
+origin = (0,0,0)
+start_point_1 = (-84.3971, 229.632, 0) ; start_point_2 = (398.286, 430.792, 0) ; start_point_3 = (0,0,28)
+
+i = 0
+def fusion(fusion_name = "fusion"):
+	name_fusion_list = []
+	obj_list = []
+	for j in range(0,15)	:
+		new_fusion_name = fusion_name + str(j)
+		name_fusion_list.append(new_fusion_name)
+	
+	obj = App.activeDocument().addObject("Part::Fuse",name_fusion_list[0])
+	obj.Base = fusion_list[0]
+	obj.Tool = fusion_list[1]
+	obj_list.append(obj)
+
+	for i in range(0,len(fusion_list)-2):
+		obj = App.activeDocument().addObject("Part::Fuse",name_fusion_list[i+1])
+		obj_list.append(obj)
+
+	for j in range(1,len(fusion_list)-1):
+		obj_list[j].Base =obj_list[j-1]
+		obj_list[j].Tool = fusion_list[j+1]
+
+	obj_list[-1].Refine = False
+	App.getDocument(name).recompute()
+
+fusion_list = []
+def silindir_olusturma(plane, start_point, distances, degrees, sketch_name, sketch_name_2,extrude_name): 
+	A =App.activeDocument().addObject('Sketcher::SketchObject', sketch_name)
+	A.Placement = App.Placement(App.Vector(start_point[0], start_point[1], start_point[2]), App.Rotation(plane[0], plane[1], plane[2], plane[3]))
+	A.MapMode = "Deactivated"
+	A.addGeometry(Part.LineSegment(App.Vector(start_point[0], start_point[1], start_point[2]),App.Vector(math.cos(distances[0]) + start_point[0],math.sin(distances[0])+start_point[1],0)),False)
+	A.addConstraint(Sketcher.Constraint('Coincident',0,1,-1,1))  
+	A.addConstraint(Sketcher.Constraint('Distance',0,distances[0]))
+	A.addConstraint(Sketcher.Constraint('Angle',-1,1,0,1,0.401465)) 
+	A.setDatum(2,App.Units.Quantity(degrees[0]))
+	A.Visibility = False
+	App.getDocument(name).recompute()
+
+	Gui.activeDocument().activeView().viewTop()
+	Gui.SendMsgToActiveView("ViewFit")
+
+	B = App.activeDocument().addObject('Sketcher::SketchObject', sketch_name_2)
+	B.MapMode = "NormalToEdge" 
+	B.Support =  [(App.getDocument(name).getObject(sketch_name),'Edge1')]
+	B.addGeometry(Part.Circle(App.Vector(0,0,0),App.Vector(0,0,1),1),False)
+	B.addConstraint(Sketcher.Constraint('Diameter',0,distances[1])) 
+	App.ActiveDocument.recompute()
+
+	App.getDocument(name).addObject('Part::Extrusion',extrude_name)  # Katı oluşturma başlangıç
+	f = App.getDocument(name).getObject(extrude_name)
+	f.Base = App.getDocument(name).getObject(sketch_name_2)
+	f.DirMode = "Normal"
+	f.DirLink = None
+	f.LengthFwd = distances[0]
+	f.LengthRev = 0.0
+	f.Solid = True
+	f.Reversed = True
+	f.Symmetric = False
+	f.TaperAngle = 0.0
+	f.TaperAngleRev = 0.0
+	B.Visibility = False
+	App.ActiveDocument.recompute()
+	fusion_list.append(f)  ##
+	
+	Gui.ActiveDocument.ActiveView.setAxisCross(False)
+	Gui.SendMsgToActiveView("ViewFit")
+	
+def cizgi(plane, start_point, distances, degrees, sketch_name):
+	A =App.activeDocument().addObject('Sketcher::SketchObject', sketch_name)
+	A.Placement = App.Placement(App.Vector(start_point[0], start_point[1], start_point[2]), App.Rotation(plane[0], plane[1], plane[2], plane[3]))
+	A.MapMode = "Deactivated"
+	A.addGeometry(Part.LineSegment(App.Vector(start_point[0], start_point[1], start_point[2]),App.Vector(math.cos(distances[0]) + start_point[0],math.sin(distances[0])+start_point[1],0)),False)
+	A.addConstraint(Sketcher.Constraint('Coincident',0,1,-1,1))  
+	A.addConstraint(Sketcher.Constraint('Distance',0,distances[0]))
+	A.addConstraint(Sketcher.Constraint('Angle',-1,1,0,1,0.401465)) 
+	A.setDatum(2,App.Units.Quantity(degrees[0]))
+	A.Visibility = False
+	App.getDocument(name).recompute()
+
+name_list = []
+def altKol(sketch_name):
+	cizgi(x_y_plane, origin, distances_6, degrees_6, "L6")
+	for j in range(0,5)	:
+		new_sketch_name = sketch_name + str(j)
+		name_list.append(new_sketch_name)
+
+	S_0 = App.activeDocument().addObject('Sketcher::SketchObject', name_list[0])
+	S_0.MapMode = "NormalToEdge"
+	S_0.Support = [(App.getDocument(name).getObject('L6'),'Edge1')]
+	S_0.MapPathParameter = 1.00
+	S_0.addGeometry(Part.LineSegment(App.Vector(1.673993,66.478132,0),App.Vector(-0.918006,-67.394709,0)),False)
+	S_0.addConstraint(Sketcher.Constraint('PointOnObject',0,1,-2)) 
+	S_0.addConstraint(Sketcher.Constraint('Vertical',0)) 
+	S_0.delConstraint(1)
+	S_0.addConstraint(Sketcher.Constraint('Distance',0,133.872841)) 
+	S_0.setDatum(1,App.Units.Quantity('140.000000 mm'))
+	S_0.addConstraint(Sketcher.Constraint('Symmetric',0,1,0,2,-1,1)) 
+	App.ActiveDocument.recompute()
+	
+	S_1 = App.activeDocument().addObject('Sketcher::SketchObject', name_list[1]) #########
+	S_1.MapMode = "ThreePointsPlane"
+	S_1.Support = [(S_0,'Vertex1'),(S_0,'Vertex2'),(App.getDocument(name).getObject('L1'),'Vertex1')]
+	S_1.addExternal("L5","Edge1")
+	S_1.addExternal(name_list[0],"Edge1")
+	S_1.addGeometry(Part.LineSegment(App.Vector(195.318032,20.894035,0),App.Vector(195.318032,4.494408,0)),False)
+	S_1.addConstraint(Sketcher.Constraint('Vertical',0)) 
+	S_1.addConstraint(Sketcher.Constraint('DistanceX',0,1,-3,1,23.5)) 
+	S_1.addConstraint(Sketcher.Constraint('Distance',0,15.0))
+	S_1.addConstraint(Sketcher.Constraint('PointOnObject',0,2,-1)) 
+	S_1.addGeometry(Part.LineSegment(App.Vector(-116.666667,70.000000,0),App.Vector(37.749958,47.557384,0)),False)
+	S_1.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(6.306478,-168.789769,0),App.Vector(0,0,1),218.620180),1.201592,1.426469),False)
+	S_1.addConstraint(Sketcher.Constraint('Tangent',1,2,2,2)) 
+	S_1.addGeometry(Part.LineSegment(App.Vector(85.200705,35.098642,0),App.Vector(210.500237,14.578369,0)),False)
+	S_1.addConstraint(Sketcher.Constraint('Coincident',2,1,3,1)) 
+	S_1.addConstraint(Sketcher.Constraint('Coincident',3,2,0,1)) 
+	S_1.addConstraint(Sketcher.Constraint('Tangent',2,1,3,1)) 
+	S_1.delConstraintOnPoint(2,1)
+	S_1.addConstraint(Sketcher.Constraint('DistanceY',-1,1,1,2,40.0)) 
+	S_1.movePoint(2,1,App.Vector(146.273389,30.964771,0),0)
+	S_1.addConstraint(Sketcher.Constraint('DistanceX',1,2,-3,1,130.0)) 
+	App.ActiveDocument.recompute()
+
+	S_2 = App.activeDocument().addObject('Sketcher::SketchObject', name_list[2])
+	S_2.MapMode = "NormalToEdge"
+	S_2.Support = [(App.getDocument(name).getObject(name_list[1]),'Edge1')]
+	S_2.addGeometry(Part.Circle(App.Vector(0.002046,-0.000136,0),App.Vector(0,0,1),33.309582),False)
+	S_2.addConstraint(Sketcher.Constraint('Coincident',0,3,-1,1)) 
+	S_2.addConstraint(Sketcher.Constraint('Diameter',0,66.619164)) 
+	S_2.setDatum(1,App.Units.Quantity('20.000000 mm'))
+	App.ActiveDocument.recompute()
+
+	P_1 = App.getDocument(name).addObject('Part::Sweep',name_list[3])
+	P_1.Sections=[S_2, ]
+	P_1.Spine=(S_1,['Edge1','Edge2','Edge3',])
+	P_1.Solid=False
+	P_1.Frenet=False
+	App.ActiveDocument.recompute()
+	
+def ustkol():
+	x = App.activeDocument().addObject('Sketcher::SketchObject', 'Sketch')
+	x.MapMode = "ThreePointsPlane"
+	x.Support = [(App.getDocument('MyProject').getObject('L3'),'Vertex1'),(App.getDocument('MyProject').getObject('A0'),'Vertex1'),(App.getDocument('MyProject').getObject('A0'),'Vertex2')]
+	App.activeDocument().recompute()
+	Gui.activeDocument().setEdit('Sketch')
+	x.addExternal("L3","Edge1")
+	x.addExternal("L1","Edge1")
+	x.addGeometry(Part.LineSegment(App.Vector(256.433765,-0.789077,0),App.Vector(171.441840,-37.126916,0)),False)
+	x.addConstraint(Sketcher.Constraint('PointOnObject',0,1,-3)) 
+	x.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(87.422256,155.212954,0),App.Vector(0,0,1),209.890248),-1.443808,-1.158949),False)
+	x.addConstraint(Sketcher.Constraint('Tangent',0,2,1,2)) 
+	x.addGeometry(Part.LineSegment(App.Vector(114.004289,-52.987252,0),App.Vector(-128.304025,-70.765534,0)),False)
+	x.addConstraint(Sketcher.Constraint('Coincident',1,1,2,1)) 
+	x.addConstraint(Sketcher.Constraint('Tangent',1,1,2,1)) 
+	x.delConstraintOnPoint(1,1)
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	
+	y = App.activeDocument().addObject('Sketcher::SketchObject', 'Sketch001')
+	y.MapMode = "NormalToEdge"
+	y.Support = [(App.getDocument('MyProject').getObject('Sketch'),'Edge3')]
+	App.activeDocument().recompute()
+	Gui.activeDocument().setEdit('Sketch001')
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+	y.MapPathParameter = 1.00
+	y.addGeometry(Part.Circle(App.Vector(0.000287,0.001486,0),App.Vector(0,0,1),17.941972),False)
+	y.addConstraint(Sketcher.Constraint('Coincident',0,3,-1,1)) 
+	y.addConstraint(Sketcher.Constraint('Radius',0,10.0)) 
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	
+	P = App.getDocument("MyProject").addObject('Part::Sweep',"BB")
+	P.Sections=[y, ]
+	P.Spine=(x,['Edge1','Edge2','Edge3',])
+	P.Solid=False
+	P.Frenet=False
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+
+def on():
+	App.setActiveDocument("MyProject")
+	App.ActiveDocument=App.getDocument("MyProject")
+	Gui.ActiveDocument=Gui.getDocument("MyProject")
+	Sz = App.activeDocument().addObject('Sketcher::SketchObject', 'Sketchz')
+	Sz.Placement = App.Placement(App.Vector(0.000000, 0.000000, 0.000000), App.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
+	Sz.MapMode = "Deactivated"
+	Gui.activeDocument().setEdit('Sketchz')
+	Sz.addGeometry(Part.LineSegment(App.Vector(26.254833,35.328186,0),App.Vector(34.942078,23.552126,0)),False)
+	Sz.addConstraint(Sketcher.Constraint('DistanceX',-1,1,0,1,26.254833)) 
+	Sz.setDatum(0,App.Units.Quantity('398.290000 mm'))
+	Sz.addConstraint(Sketcher.Constraint('DistanceY',-1,1,0,1,35.328186)) 
+	Sz.setDatum(1,App.Units.Quantity('430.790000 mm'))
+	Sz.addConstraint(Sketcher.Constraint('DistanceX',-1,1,0,2,34.942078)) 
+	Sz.setDatum(2,App.Units.Quantity('435.723000 mm'))
+	Sz.addConstraint(Sketcher.Constraint('DistanceY',-1,1,0,2,23.552126)) 
+	Sz.setDatum(3,App.Units.Quantity('300.233000 mm'))
+	Sz.addGeometry(Part.LineSegment(App.Vector(435.722992,300.233002,0),App.Vector(43.119480,147.441269,0)),False)
+	Sz.addConstraint(Sketcher.Constraint('Coincident',1,1,0,2)) 
+	Sz.addConstraint(Sketcher.Constraint('Distance',1,421.287119)) 
+	Sz.setDatum(5,App.Units.Quantity('400.000000 mm'))
+	Sz.addConstraint(Sketcher.Constraint('Perpendicular',0,1)) 
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+	Sx = App.activeDocument().addObject('Sketcher::SketchObject', 'Sketchz1')
+	Sx.MapMode = "NormalToEdge"
+	Sx.Support = [(App.getDocument('MyProject').getObject('Sketchz'),'Edge2')]
+	App.activeDocument().recompute()
+	Gui.activeDocument().setEdit('Sketchz1')
+	Sx.addGeometry(Part.LineSegment(App.Vector(0.000000,0.000000,0),App.Vector(-30.268528,0.103379,0)),False)
+	Sx.addConstraint(Sketcher.Constraint('Coincident',-1,1,0,1)) 
+	Sx.addConstraint(Sketcher.Constraint('PointOnObject',0,2,-1)) 
+	Sx.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(-70.474703,0.000000,0),App.Vector(0,0,1),40.206175),0.000000,1.581054),False)
+	Sx.addConstraint(Sketcher.Constraint('Perpendicular',0,2,1,1)) 
+	Sx.addGeometry(Part.LineSegment(App.Vector(-70.887118,40.204060,0),App.Vector(-191.001888,38.971919,0)),False)
+	Sx.addConstraint(Sketcher.Constraint('Tangent',1,2,2,1)) 
+	Sx.addGeometry(Part.ArcOfCircle(Part.Circle(App.Vector(-70.728970,0.000000,0),App.Vector(0,0,1),40.460442),-1.534014,-0.000000),False)
+	Sx.addConstraint(Sketcher.Constraint('Perpendicular',0,2,3,2)) 
+	Sx.addGeometry(Part.LineSegment(App.Vector(-69.241076,-40.433075,0),App.Vector(-189.660641,-44.864385,0)),False)
+	Sx.addConstraint(Sketcher.Constraint('Tangent',3,1,4,1)) 
+	Sx.Visibility = False
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+	Sc = App.activeDocument().addObject('Sketcher::SketchObject', 'Sketchz2')
+	Sc.MapMode = "NormalToEdge"
+	Sc.Support = [(App.getDocument('MyProject').getObject('Sketchz1'),'Edge5')]
+	App.activeDocument().recompute()
+	Gui.activeDocument().setEdit('Sketchz2')
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+	Sc.MapPathParameter = 1.00
+	Sc.addGeometry(Part.Circle(App.Vector(0.000004,-0.000000,0),App.Vector(0,0,1),17.990647),False)
+	Sc.addConstraint(Sketcher.Constraint('Coincident',0,3,-1,1)) 
+	Sc.addConstraint(Sketcher.Constraint('Radius',0,17.990647)) 
+	Sc.setDatum(1,App.Units.Quantity('18.000000 mm'))
+	Sc.setDatum(1,App.Units.Quantity('15.000000 mm'))
+	Sc.setDatum(1,App.Units.Quantity('12.000000 mm'))
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+	App.getDocument('MyProject').addObject('Part::Sweep','Sweep')
+	App.getDocument('MyProject').ActiveObject.Sections=[App.getDocument('MyProject').Sketchz2, ]
+	App.getDocument('MyProject').ActiveObject.Spine=(App.getDocument('MyProject').getObject('Sketchz1'),['Edge5','Edge4','Edge2','Edge1',])
+	App.getDocument('MyProject').ActiveObject.Solid=True
+	App.getDocument('MyProject').ActiveObject.Frenet=False
+	Sv = App.activeDocument().addObject('Sketcher::SketchObject', 'Sketchz3')
+	Sv.MapMode = "NormalToEdge"
+	Sv.Support = [(App.getDocument('MyProject').getObject('Sketchz1'),'Edge3')]
+	App.activeDocument().recompute()
+	Gui.activeDocument().setEdit('Sketchz3')
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+	Sv.MapPathParameter = 1.00
+	Sv.addGeometry(Part.Circle(App.Vector(-0.000018,-0.000000,0),App.Vector(0,0,1),19.272069),False)
+	Sv.addConstraint(Sketcher.Constraint('Coincident',0,3,-1,1)) 
+	Sv.addConstraint(Sketcher.Constraint('Radius',0,19.272069)) 
+	Sv.setDatum(1,App.Units.Quantity('12.000000 mm'))
+	Sv.Visibility = False
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+	App.getDocument('MyProject').addObject('Part::Sweep','Sweep')
+	App.getDocument('MyProject').ActiveObject.Sections=[App.getDocument('MyProject').Sketchz3, ]
+	App.getDocument('MyProject').ActiveObject.Spine=(App.getDocument('MyProject').getObject('Sketchz1'),['Edge3',])
+	App.getDocument('MyProject').ActiveObject.Solid=True
+	App.getDocument('MyProject').ActiveObject.Frenet=False
+	App.getDocument('MyProject').recompute()
+	App.getDocument('MyProject').removeObject('Sketchz')
+	Sc.Visibility = False
+	App.getDocument('MyProject').recompute()
+
+
+def ek_on():
+	SK_listss = ["Sketch002003", "Sketch002004"]
+	Facess = ["Face6", "Face5","Edge9", "Edge2"]
+	N_Extrud = ["Extrude003", "Extrude004"]
+	for m in range(2):
+		SZ_o = App.activeDocument().addObject('Sketcher::SketchObject', SK_listss[m])
+		SZ_o.MapMode = "FlatFace"
+		SZ_o.Support = [(App.getDocument('MyProject').getObject('Sweep'),Facess[m])]
+		App.activeDocument().recompute()
+		Gui.activeDocument().setEdit(SK_listss[m])
+		SZ_o.addExternal("Sweep",Facess[m+2])
+		SZ_o.addGeometry(Part.Circle(App.Vector(501.708044,37.725194,0),App.Vector(0,0,1),22.551669),False)
+		SZ_o.addConstraint(Sketcher.Constraint('Coincident',0,3,-3,3)) 
+		SZ_o.addConstraint(Sketcher.Constraint('Radius',0,22.551669)) 
+		SZ_o.setDatum(1,App.Units.Quantity('12.000000 mm'))
+		Gui.getDocument('MyProject').resetEdit()
+		App.getDocument('MyProject').recompute()
+		App.getDocument('MyProject').addObject('Part::Extrusion',N_Extrud[m])
+		f = App.getDocument('MyProject').getObject(N_Extrud[m])
+		f.Base = App.getDocument('MyProject').getObject(SK_listss[m])
+		f.DirMode = "Normal"
+		f.DirLink = None
+		f.LengthFwd = 90.000000000000000
+		f.LengthRev = 2.000000000000000
+		f.Solid = True
+		f.Reversed = False
+		f.Symmetric = False
+		f.TaperAngle = 0.000000000000000
+		f.TaperAngleRev = 0.000000000000000
+		App.getDocument('MyProject').getObject(SK_listss[m]).Visibility = False
+		App.ActiveDocument.recompute()
+
+def arka_teker():
+	SSS1 = App.activeDocument().addObject('Sketcher::SketchObject', 'Sketch002')
+	SSS1.Placement = App.Placement(App.Vector(0.000000, 0.000000, 0.000000), App.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
+	SSS1.MapMode = "Deactivated"
+	Gui.activeDocument().setEdit('Sketch002')
+	SSS1.addExternal("A1","Vertex1")
+	SSS1.addGeometry(Part.Circle(App.Vector(-350.665405,-53.721985,0),App.Vector(0,0,1),229.090293),False)
+	SSS1.addConstraint(Sketcher.Constraint('Coincident',0,3,-3,1)) 
+	SSS1.addConstraint(Sketcher.Constraint('Radius',0,200)) 
+	SSS1.addGeometry(Part.LineSegment(App.Vector(-350.665405,-53.721985,0),App.Vector(-153.798477,-50.661659,0)),False)
+	SSS1.addConstraint(Sketcher.Constraint('Coincident',1,1,0,3)) 
+	SSS1.addConstraint(Sketcher.Constraint('PointOnObject',1,2,0)) 
+	SSS1.addConstraint(Sketcher.Constraint('Horizontal',1)) 
+	SSS1.addGeometry(Part.LineSegment(App.Vector(-350.665405,-53.721985,0),App.Vector(-349.985657,142.702667,0)),False)
+	SSS1.addConstraint(Sketcher.Constraint('Coincident',2,1,0,3)) 
+	SSS1.addConstraint(Sketcher.Constraint('PointOnObject',2,2,0)) 
+	SSS1.addConstraint(Sketcher.Constraint('Vertical',2)) 
+	SSS1.addGeometry(Part.LineSegment(App.Vector(-350.665405,-53.721985,0),App.Vector(-547.584229,-54.895924,0)),False)
+	SSS1.addConstraint(Sketcher.Constraint('Coincident',3,1,0,3)) 
+	SSS1.addConstraint(Sketcher.Constraint('PointOnObject',3,2,0)) 
+	SSS1.addConstraint(Sketcher.Constraint('Horizontal',3)) 
+	SSS1.addGeometry(Part.LineSegment(App.Vector(-350.665405,-53.721985,0),App.Vector(-345.751404,-253.905930,0)),False)
+	SSS1.addConstraint(Sketcher.Constraint('Coincident',4,1,0,3)) 
+	SSS1.addConstraint(Sketcher.Constraint('PointOnObject',4,2,0)) 
+	SSS1.addConstraint(Sketcher.Constraint('Vertical',4)) 
+	SSS1.addGeometry(Part.LineSegment(App.Vector(-350.665405,-53.721985,0),App.Vector(-484.070435,91.891602,0)),False)
+	SSS1.addConstraint(Sketcher.Constraint('Coincident',5,1,0,3)) 
+	SSS1.addConstraint(Sketcher.Constraint('PointOnObject',5,2,0)) 
+	SSS1.addGeometry(Part.LineSegment(App.Vector(-350.665405,-53.721985,0),App.Vector(-203.198135,-193.214935,0)),False)
+	SSS1.addConstraint(Sketcher.Constraint('Coincident',6,1,0,3)) 
+	SSS1.addConstraint(Sketcher.Constraint('PointOnObject',6,2,0)) 
+	SSS1.addConstraint(Sketcher.Constraint('Angle',1,1,5,1,2.304207)) 
+	SSS1.setDatum(18,App.Units.Quantity('135.000000 deg'))
+	SSS1.addConstraint(Sketcher.Constraint('Angle',6,1,1,1,0.768071)) 
+	SSS1.setDatum(19,App.Units.Quantity('45.000000 deg'))
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+
+	SS_listss = ["Sketch003","Sketch004","Sketch0035"]
+	SS_edges = ["Edge1","Edge6","Edge5"]
+	for k,l in enumerate(SS_listss):
+		SS1 = App.activeDocument().addObject('Sketcher::SketchObject', l)
+		SS1.MapMode = "NormalToEdge"
+		SS1.Support = [(App.getDocument('MyProject').getObject('Sketch002'),SS_edges[k])]
+		App.activeDocument().recompute()
+		Gui.activeDocument().setEdit(l)
+		SS1.addGeometry(Part.Circle(App.Vector(-0.000011,-0.000000,0),App.Vector(0,0,1),22.853029),False)
+		SS1.addConstraint(Sketcher.Constraint('Coincident',0,3,-1,1)) 
+		SS1.addConstraint(Sketcher.Constraint('Radius',0,5)) 
+		Gui.getDocument('MyProject').resetEdit()
+		App.ActiveDocument.recompute()
+		App.getDocument('MyProject').recompute()
+
+	Extrude_listsss = ["Extrude","Extrude001","Extrude002"]
+	for i,j in enumerate(Extrude_listsss):
+		App.getDocument('MyProject').addObject('Part::Extrusion',j)
+		f = App.getDocument('MyProject').getObject(j)
+		f.Base = App.getDocument('MyProject').getObject(SS_listss[i])
+		f.DirMode = "Normal"
+		f.DirLink = None
+		f.LengthFwd = 200.000000000000000
+		f.LengthRev = 200.000000000000000
+		f.Solid = True
+		f.Reversed = False
+		f.Symmetric = False
+		f.TaperAngle = 0.000000000000000
+		f.TaperAngleRev = 0.000000000000000
+		App.getDocument('MyProject').getObject(SS_listss[i]).Visibility = False
+		App.ActiveDocument.recompute()
+	
+	TT = App.ActiveDocument.addObject("Part::Torus","Torus")
+	App.ActiveDocument.ActiveObject.Label = "Halka"
+	TT.Radius1=200.00
+	TT.Radius2=10.00
+	TT.Angle1=-180.00
+	TT.Angle2=180.00
+	TT.Angle3=360.00
+	TT.Placement=App.Placement(App.Vector(-345.96,-53.00,0.00),App.Rotation(App.Vector(0.00,0.00,1.00),0.00))
+	SSS1.Visibility = False
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+
+def on_teker():
+	S_S_A =App.activeDocument().addObject('Sketcher::SketchObject', 'Sketch002006')
+	S_S_A.Placement = App.Placement(App.Vector(0.000000, 0.000000, 0.000000), App.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
+	S_S_A.MapMode = "Deactivated"
+	Gui.activeDocument().setEdit('Sketch002006')
+	S_S_A.addGeometry(Part.LineSegment(App.Vector(0.000000,0.000000,0),App.Vector(422.797028,58.628719,0)),False)
+	S_S_A.addConstraint(Sketcher.Constraint('Coincident',0,1,-1,1)) 
+	S_S_A.addConstraint(Sketcher.Constraint('DistanceY',-1,1,0,2,29.4)) 
+	S_S_A.addConstraint(Sketcher.Constraint('DistanceX',-1,1,0,2,510.349)) 
+	S_S_A.addGeometry(Part.Circle(App.Vector(510.348999,29.400000,0),App.Vector(0,0,1),181.563505),False)
+	S_S_A.addConstraint(Sketcher.Constraint('Coincident',1,3,0,2)) 
+	S_S_A.addConstraint(Sketcher.Constraint('Radius',1,200)) 
+	S_S_A.addGeometry(Part.LineSegment(App.Vector(510.348999,29.400000,0),App.Vector(710.689941,29.322275,0)),False)
+	S_S_A.addConstraint(Sketcher.Constraint('Coincident',2,1,0,2)) 
+	S_S_A.addConstraint(Sketcher.Constraint('PointOnObject',2,2,1)) 
+	S_S_A.addConstraint(Sketcher.Constraint('Horizontal',2)) 
+	S_S_A.addGeometry(Part.LineSegment(App.Vector(510.348999,29.400000,0),App.Vector(503.820709,224.124130,0)),False)
+	S_S_A.addConstraint(Sketcher.Constraint('Coincident',3,1,0,2)) 
+	S_S_A.addConstraint(Sketcher.Constraint('PointOnObject',3,2,1)) 
+	S_S_A.addConstraint(Sketcher.Constraint('Vertical',3)) 
+	S_S_A.addGeometry(Part.LineSegment(App.Vector(510.348999,29.400000,0),App.Vector(310.742798,31.046188,0)),False)
+	S_S_A.addConstraint(Sketcher.Constraint('Coincident',4,1,0,2)) 
+	S_S_A.addConstraint(Sketcher.Constraint('PointOnObject',4,2,1)) 
+	S_S_A.addConstraint(Sketcher.Constraint('Horizontal',4)) 
+	S_S_A.addGeometry(Part.LineSegment(App.Vector(510.348999,29.400000,0),App.Vector(508.992432,-162.031815,0)),False)
+	S_S_A.addConstraint(Sketcher.Constraint('Coincident',5,1,0,2)) 
+	S_S_A.addConstraint(Sketcher.Constraint('PointOnObject',5,2,1)) 
+	S_S_A.addConstraint(Sketcher.Constraint('Vertical',5)) 
+	S_S_A.addGeometry(Part.LineSegment(App.Vector(510.348999,29.400000,0),App.Vector(652.077087,167.235123,0)),False)
+	S_S_A.addConstraint(Sketcher.Constraint('Coincident',6,1,0,2)) 
+	S_S_A.addConstraint(Sketcher.Constraint('PointOnObject',6,2,1)) 
+	S_S_A.addGeometry(Part.LineSegment(App.Vector(510.348999,29.400000,0),App.Vector(381.423126,-120.657944,0)),False)
+	S_S_A.addConstraint(Sketcher.Constraint('Coincident',7,1,0,2)) 
+	S_S_A.addConstraint(Sketcher.Constraint('PointOnObject',7,2,1)) 
+	S_S_A.addConstraint(Sketcher.Constraint('Angle',2,1,6,1,0.763708)) 
+	S_S_A.setDatum(21,App.Units.Quantity('45.000000 deg'))
+	S_S_A.addConstraint(Sketcher.Constraint('Angle',7,1,2,1,2.274232)) 
+	S_S_A.setDatum(22,App.Units.Quantity('135.000000 deg'))
+	S_S_A.Visibility = True
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+
+	SS_listss = ["Sketch002007","Sketch002008","Sketch002009"]
+	SS_edges = ["Edge5","Edge4","Edge2"]
+	for k,l in enumerate(SS_listss):
+		SS1 = App.activeDocument().addObject('Sketcher::SketchObject', l)
+		SS1.MapMode = "NormalToEdge"
+		SS1.Support = [(App.getDocument('MyProject').getObject('Sketch002006'),SS_edges[k])]
+		App.activeDocument().recompute()
+		Gui.activeDocument().setEdit(l)
+		SS1.addGeometry(Part.Circle(App.Vector(-0.000011,-0.000000,0),App.Vector(0,0,1),22.853029),False)
+		SS1.addConstraint(Sketcher.Constraint('Coincident',0,3,-1,1)) 
+		SS1.addConstraint(Sketcher.Constraint('Radius',0,5)) 
+		Gui.getDocument('MyProject').resetEdit()
+		App.ActiveDocument.recompute()
+		App.getDocument('MyProject').recompute()
+
+	Extrude_listssss = ["Extrude005","Extrude006","Extrude007"]
+	for n,o in enumerate(Extrude_listssss):
+		App.getDocument('MyProject').addObject('Part::Extrusion',o)
+		f = App.getDocument('MyProject').getObject(o)
+		f.Base = App.getDocument('MyProject').getObject(SS_listss[n])
+		f.DirMode = "Normal"
+		f.DirLink = None
+		f.LengthFwd = 200.000000000000000
+		f.LengthRev = 200.000000000000000
+		f.Solid = True
+		f.Reversed = False
+		f.Symmetric = False
+		f.TaperAngle = 0.000000000000000
+		f.TaperAngleRev = 0.000000000000000
+		App.getDocument('MyProject').getObject(SS_listss[n]).Visibility = False
+		App.ActiveDocument.recompute()
+
+	Torr = App.ActiveDocument.addObject("Part::Torus","Torus001")
+	App.ActiveDocument.ActiveObject.Label = "Halka"
+	App.ActiveDocument.recompute()
+	Torr.Radius1=200.00
+	Torr.Radius2=10.00
+	Torr.Angle1=-180.00
+	Torr.Angle2=180.00
+	Torr.Angle3=360.00
+	Torr.Placement=App.Placement(App.Vector(510.35,29.40,0.00),App.Rotation(App.Vector(0.00,0.00,1.00),0.00))
+	App.getDocument('MyProject').getObject('Sketch002006').Visibility = False
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	# arka orta
+	AO_A = App.activeDocument().addObject('Sketcher::SketchObject', 'Sketch002010')
+	AO_A.MapMode = "NormalToEdge"
+	AO_A.Support = [(App.getDocument('MyProject').getObject('A0'),'Edge1')]
+	App.activeDocument().recompute()
+	Gui.activeDocument().setEdit('Sketch002010')
+	AO_A.addGeometry(Part.Circle(App.Vector(-0.000008,-0.000001,0),App.Vector(0,0,1),35.885472),False)
+	AO_A.addConstraint(Sketcher.Constraint('Coincident',0,3,-1,1)) 
+	AO_A.addConstraint(Sketcher.Constraint('Radius',0,7.5)) 
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+	App.getDocument('MyProject').addObject('Part::Extrusion','Extrude008')
+	f = App.getDocument('MyProject').getObject('Extrude008')
+	f.Base = App.getDocument('MyProject').getObject('Sketch002010')
+	f.DirMode = "Normal"
+	f.DirLink = None
+	f.LengthFwd = 0.000000000000000
+	f.LengthRev = 147.000000000000000
+	f.Solid = True
+	f.Reversed = False
+	f.Symmetric = False
+	f.TaperAngle = 0.000000000000000
+	f.TaperAngleRev = 0.000000000000000
+	App.getDocument('MyProject').getObject('Sketch002010').Visibility = False
+	App.ActiveDocument.recompute()
+	# on orta
+	OO_O = App.activeDocument().addObject('Sketcher::SketchObject', 'Sketch002011')
+	OO_O.Placement = App.Placement(App.Vector(0.000000, 0.000000, 0.000000), App.Rotation(0.000000, 0.000000, 0.000000, 1.000000))
+	OO_O.MapMode = "Deactivated"
+	Gui.activeDocument().setEdit('Sketch002011')
+	OO_O.addGeometry(Part.Circle(App.Vector(569.571411,98.782097,0),App.Vector(0,0,1),35.371688),False)
+	OO_O.addConstraint(Sketcher.Constraint('DistanceY',-1,1,0,3,29.4)) 
+	OO_O.addConstraint(Sketcher.Constraint('DistanceX',-1,1,0,3,510.349)) 
+	OO_O.setDatum(0,App.Units.Quantity('32.000000 mm'))
+	OO_O.addConstraint(Sketcher.Constraint('Radius',0,7.5)) 
+	Gui.getDocument('MyProject').resetEdit()
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').recompute()
+	OO_O.Visibility = False
+	App.ActiveDocument.recompute()
+	App.getDocument('MyProject').addObject('Part::Extrusion','Extrude014')
+	f = App.getDocument('MyProject').getObject('Extrude014')
+	f.Base = OO_O
+	f.DirMode = "Normal"
+	f.DirLink = None
+	f.LengthFwd = 47.000000000000000
+	f.LengthRev = 53.000000000000000
+	f.Solid = True
+	f.Reversed = False
+	f.Symmetric = False
+	f.TaperAngle = 0.000000000000000
+	f.TaperAngleRev = 0.000000000000000
+	App.getDocument('MyProject').getObject('Sketch002011').Visibility = False
+	App.ActiveDocument.recompute()
+
+App.newDocument(name)
+App.setActiveDocument(name)
+App.ActiveDocument=App.getDocument(name)
+Gui.ActiveDocument=Gui.getDocument(name)
+
+distances_1 = [278.9, 36] ; distances_2 = [545.65, 33] ; distances_3 = [520.7, 33] ; distances_4 = [135.82, 36] ; distances_5 = [56,47] ; distances_6 = [350]
+degrees_1 = ["110,18 deg",] ; degrees_2 = ["39,8 deg",] ; degrees_3 = ["20 deg",] ; degrees_4 = ["286 deg"] ; degrees_5 = ["270 deg"] ; degrees_6 = ["188,71 deg"]
+extrude_name_1 = "E1" ; extrude_name_2 = "E2" ; extrude_name_3 = "E3" ; extrude_name_4 = "E4" ; extrude_name_5 = "E5"
+
+silindir_olusturma(x_y_plane, origin,distances_1, degrees_1, "L1", "L11",extrude_name_1)
+silindir_olusturma(x_y_plane, origin,distances_2, degrees_2, "L2", "L22",extrude_name_2)
+silindir_olusturma(x_y_plane, start_point_1,distances_3, degrees_3, "L3", "L33",extrude_name_3)
+silindir_olusturma(x_y_plane, start_point_2,distances_4, degrees_4, "L4", "L44",extrude_name_4)
+silindir_olusturma(y_z_plane, start_point_3,distances_5, degrees_5, "L5", "L55",extrude_name_5)
+
+altKol("A")
+ustkol()
+fusion()
+cizgi(x_y_plane, origin, distances_6, degrees_6, "L6")
+
+on()
+ek_on()
+arka_teker()
+on_teker()
